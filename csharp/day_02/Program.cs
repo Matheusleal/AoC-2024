@@ -2,7 +2,7 @@
 
 using Day_02.Services;
 
-static Collection<string> ReadFile(string path)
+static Collection<string> LoadReports(string path)
 {
     Collection<string> listRaw = [];
 
@@ -15,54 +15,82 @@ static Collection<string> ReadFile(string path)
     return listRaw;
 }
 
-static int CalculateReports(Collection<string> list)
+static bool SafetyCheck(List<string> line)
+{
+    bool isSafe = true;
+    int upDown = 0; // -1 = down, 1 = up
+
+    for (int i = 1; i < line.Count; i++)
+    {
+        var current = int.Parse(line[i - 1]);
+        var next = int.Parse(line[i]);
+
+        if (upDown == 0)
+            upDown = current < next ? 1 : -1;
+
+        var safetyCheck = (current, next) switch
+        {
+            (int c, int n) when c > n && (c - n) <= 3 && upDown == -1 => true,
+            (int c, int n) when c < n && (n - c) <= 3 && upDown == 1 => true,
+            (_, _) => false
+        };
+
+        if (!safetyCheck)
+        {
+            isSafe = false;
+            break;
+        }
+    }
+
+    return isSafe;
+}
+
+static int CalculateReports_Part1(Collection<string> list)
 {
     var safeCounter = 0;
 
     foreach (var line in list)
     {
-        var splitedRow = line.Split(' ');
+        var splitedRow = line.Split(' ').ToList();
 
-        bool isSafe = true;
-        int upDown = 0; // -1 = down, 1 = up
+        if (SafetyCheck(splitedRow))
+            safeCounter++;
+    }
 
-        for (int i = 1; i < splitedRow.Length; i++)
-        {
-            var current = int.Parse(splitedRow[i - 1]);
-            var next = int.Parse(splitedRow[i]);
+    return safeCounter;
+}
+static int CalculateReports_Part2(Collection<string> list)
+{
+    var safeCounter = 0;
 
-            if (upDown == 0)
-                upDown = current < next ? -1 : 1;
+    foreach (var line in list)
+    {
+        var splitedRow = line.Split(' ').ToList();
 
-            var safetyCheck = (current, next) switch
+        if (SafetyCheck(splitedRow))
+            safeCounter++;
+
+        else
+            for (int i = 0; i < splitedRow.Count; i++)
             {
-                (int c, int n) when c > n && (c - n) <= 3 && upDown > -1 => true,
-                (int c, int n) when c < n && (n - c) <= 3 && upDown < 1 => true,
-                (_, _) => false
-            };
+                var copy = splitedRow.ToList();
+                copy.RemoveAt(i);
 
-            if (!safetyCheck)
-            {
-                isSafe = false;
-                break;
+                if (SafetyCheck(copy))
+                {
+                    safeCounter++;
+                    break;
+                }
             }
-        }
-
-        if (isSafe) safeCounter++;
     }
 
     return safeCounter;
 }
 
-var list = ReadFile("data/report_data.txt");
+var list = LoadReports("data/report_data.txt");
 
-// var list = new Collection<string>(){
-//     "1 2 3 5 7 9 10",
-//     "6 5 4 3 1",
-//     "1 6 4 6 2 1",
-//     "1 6 4 6 2 1",
-// };
+var safeTotal_part1 = CalculateReports_Part1(list);
+var safeTotal_part2 = CalculateReports_Part2(list);
 
-var safeTotal = CalculateReports(list);
-
-Console.WriteLine($"Safe total: {safeTotal} Unsafe total: {list.Count - safeTotal}");
+Console.WriteLine($"Safe total: {safeTotal_part1}, Unsafe total: {list.Count - safeTotal_part1}");
+Console.WriteLine($"Safe total: {safeTotal_part2}, Unsafe total: {list.Count - safeTotal_part2}");
